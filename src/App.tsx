@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
+import classNames from 'classnames';
 import 'bulma/css/bulma.css';
 import '@fortawesome/fontawesome-free/css/all.css';
 import './App.scss';
 
 import { UserSelector } from './components/UserSelector';
 import { PostsList } from './components/PostsList';
+import { PostDetails } from './components/PostDetails';
 import { Loader } from './components/Loader';
 import { User } from './types/User';
 import { Post } from './types/Post';
+import { Comment } from './types/Comment';
 import { getUsers } from './api/users';
 import { getPostsByUserId } from './api/posts';
+import { getCommentsByPostId } from './api/comments';
 
 export const App = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -21,6 +25,10 @@ export const App = () => {
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [postsError, setPostsError] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [commentsError, setCommentsError] = useState(false);
 
   useEffect(() => {
     setIsLoadingUsers(true);
@@ -38,26 +46,34 @@ export const App = () => {
     setPostsError(false);
     setPosts([]);
     setSelectedPost(null);
-  };
 
-  useEffect(() => {
-    if (!selectedUser) {
-      return;
-    }
-
-    setIsLoadingPosts(true);
-    setPostsError(false);
-    setPosts([]);
-    setSelectedPost(null);
-
-    getPostsByUserId(selectedUser.id)
+    getPostsByUserId(user.id)
       .then(setPosts)
       .catch(() => setPostsError(true))
       .finally(() => setIsLoadingPosts(false));
-  }, [selectedUser]);
+  };
 
   const handlePostSelect = (post: Post) => {
     setSelectedPost(prev => (prev?.id === post.id ? null : post));
+
+    if (selectedPost?.id === post.id) {
+      // Deselecting the post
+      return;
+    }
+
+    // Selecting a new post - load its comments
+    setIsLoadingComments(true);
+    setCommentsError(false);
+    setComments([]);
+
+    getCommentsByPostId(post.id)
+      .then(setComments)
+      .catch(() => setCommentsError(true))
+      .finally(() => setIsLoadingComments(false));
+  };
+
+  const handleCommentDelete = (commentId: number) => {
+    setComments(prev => prev.filter(comment => comment.id !== commentId));
   };
 
   return (
@@ -121,20 +137,28 @@ export const App = () => {
             </div>
           </div>
 
-          {/* <div
+          <div
             data-cy="Sidebar"
             className={classNames(
               'tile',
               'is-parent',
               'is-8-desktop',
               'Sidebar',
-              'Sidebar--open',
+              { 'Sidebar--open': selectedPost !== null },
             )}
           >
             <div className="tile is-child box is-success ">
-              <PostDetails />
+              {selectedPost && (
+                <PostDetails
+                  post={selectedPost}
+                  comments={comments}
+                  isLoadingComments={isLoadingComments}
+                  commentsError={commentsError}
+                  onCommentDelete={handleCommentDelete}
+                />
+              )}
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
     </main>
