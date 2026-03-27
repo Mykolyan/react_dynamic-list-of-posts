@@ -1,0 +1,1 @@
+import{c as e}from"./index-CNOzhoX_.js";const m=t=>e.get(`/comments?postId=${t}`),s=t=>e.delete(`/comments/${t}`),n=t=>e.post("/comments",t);export{n as createComment,s as deleteComment,m as getCommentsByPostId};
