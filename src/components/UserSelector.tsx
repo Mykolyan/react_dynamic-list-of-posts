@@ -21,7 +21,7 @@ export const UserSelector: React.FC<Props> = ({
     <div
       data-cy="UserSelector"
       className={classNames('dropdown', {
-        'is-active': isOpen && !isLoading,
+        'is-active': isOpen,
       })}
       onBlur={event => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
@@ -36,6 +36,7 @@ export const UserSelector: React.FC<Props> = ({
           aria-haspopup="true"
           aria-controls="dropdown-menu"
           onClick={() => !isLoading && setIsOpen(prev => !prev)}
+          disabled={isLoading}
         >
           <span>{selectedUser ? selectedUser.name : 'Choose a user'}</span>
 
@@ -45,7 +46,14 @@ export const UserSelector: React.FC<Props> = ({
         </button>
       </div>
 
-      <div className="dropdown-menu" id="dropdown-menu" role="menu">
+      <div
+        className="dropdown-menu"
+        id="dropdown-menu"
+        role="menu"
+        onMouseDown={event => {
+          event.preventDefault();
+        }}
+      >
         <div className="dropdown-content">
           {users.map(user => (
             <a

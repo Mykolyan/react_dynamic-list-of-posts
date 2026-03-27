@@ -1,6 +1,6 @@
 import React from 'react';
-import cn from 'classnames';
 import { Post } from '../types/Post';
+import classNames from 'classnames';
 
 type Props = {
   posts: Post[];
@@ -35,7 +35,7 @@ export const PostsList: React.FC<Props> = ({
               <button
                 type="button"
                 data-cy="PostButton"
-                className={cn('button', 'is-link', {
+                className={classNames('button', 'is-link', {
                   'is-light': selectedPostId !== post.id,
                 })}
                 onClick={() => onPostSelect(post)}

@@ -12,12 +12,6 @@ import { User } from './types/User';
 import { Post } from './types/Post';
 import { Comment, CommentData } from './types/Comment';
 import { getUsers } from './api/users';
-import { getPostsByUserId } from './api/posts';
-import {
-  getCommentsByPostId,
-  createComment,
-  deleteComment,
-} from './api/comments';
 
 export const App = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -35,55 +29,89 @@ export const App = () => {
   const [commentsError, setCommentsError] = useState(false);
 
   useEffect(() => {
-    setIsLoadingUsers(true);
-    setUsersError(false);
+    const loadUsers = async () => {
+      setIsLoadingUsers(true);
+      setUsersError(false);
 
-    getUsers()
-      .then(setUsers)
-      .catch(() => setUsersError(true))
-      .finally(() => setIsLoadingUsers(false));
+      try {
+        const fetchedUsers = await getUsers();
+
+        setUsers(fetchedUsers);
+      } catch {
+        setUsersError(true);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+
+    void loadUsers();
   }, []);
 
-  const handleUserSelect = (user: User) => {
+  const handleUserSelect = async (user: User) => {
     setSelectedUser(user);
     setIsLoadingPosts(true);
     setPostsError(false);
     setPosts([]);
     setSelectedPost(null);
 
-    getPostsByUserId(user.id)
-      .then(setPosts)
-      .catch(() => setPostsError(true))
-      .finally(() => setIsLoadingPosts(false));
+    try {
+      const { getPostsByUserId } = await import('./api/posts');
+      const fetchedPosts = await getPostsByUserId(user.id);
+
+      setPosts(fetchedPosts);
+    } catch {
+      setPostsError(true);
+    } finally {
+      setIsLoadingPosts(false);
+    }
   };
 
-  const handlePostSelect = (post: Post) => {
-    setSelectedPost(prev => (prev?.id === post.id ? null : post));
-    // Selecting a new post - load its comments
+  const handlePostSelect = async (post: Post) => {
+    if (selectedPost?.id === post.id) {
+      setSelectedPost(null);
+      setComments([]);
+
+      return;
+    }
+
+    setSelectedPost(post);
     setIsLoadingComments(true);
     setCommentsError(false);
     setComments([]);
 
-    getCommentsByPostId(post.id)
-      .then(setComments)
-      .catch(() => setCommentsError(true))
-      .finally(() => setIsLoadingComments(false));
+    try {
+      const { getCommentsByPostId } = await import('./api/comments');
+      const fetchedComments = await getCommentsByPostId(post.id);
+
+      setComments(fetchedComments);
+    } catch {
+      setCommentsError(true);
+    } finally {
+      setIsLoadingComments(false);
+    }
   };
 
-  const handleCommentDelete = (commentId: number) => {
+  const handleCommentDelete = async (commentId: number) => {
     setComments(prev => prev.filter(comment => comment.id !== commentId));
 
-    deleteComment(commentId)
-      .catch(() => setCommentsError(true))
-      .finally(() => setIsLoadingComments(false));
+    try {
+      const { deleteComment } = await import('./api/comments');
+
+      await deleteComment(commentId);
+    } catch {
+      setCommentsError(true);
+    }
   };
 
-  const handleCommentSubmit = (data: CommentData): Promise<void> => {
-    return createComment({ ...data, postId: selectedPost!.id, id: 0 }).then(
-      newComment => {
-        setComments(prev => [...prev, newComment]);
-      },
-    );
+  const handleCommentSubmit = async (data: CommentData): Promise<void> => {
+    const { createComment } = await import('./api/comments');
+    const newComment = await createComment({
+      ...data,
+      postId: selectedPost!.id,
+      id: 0,
+    });
+
+    setComments(prev => [...prev, newComment]);
   };
 
   return (
