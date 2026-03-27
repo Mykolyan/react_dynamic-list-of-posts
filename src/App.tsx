@@ -10,10 +10,14 @@ import { PostDetails } from './components/PostDetails';
 import { Loader } from './components/Loader';
 import { User } from './types/User';
 import { Post } from './types/Post';
-import { Comment } from './types/Comment';
+import { Comment, CommentData } from './types/Comment';
 import { getUsers } from './api/users';
 import { getPostsByUserId } from './api/posts';
-import { getCommentsByPostId } from './api/comments';
+import {
+  getCommentsByPostId,
+  createComment,
+  deleteComment,
+} from './api/comments';
 
 export const App = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -55,12 +59,6 @@ export const App = () => {
 
   const handlePostSelect = (post: Post) => {
     setSelectedPost(prev => (prev?.id === post.id ? null : post));
-
-    if (selectedPost?.id === post.id) {
-      // Deselecting the post
-      return;
-    }
-
     // Selecting a new post - load its comments
     setIsLoadingComments(true);
     setCommentsError(false);
@@ -74,6 +72,18 @@ export const App = () => {
 
   const handleCommentDelete = (commentId: number) => {
     setComments(prev => prev.filter(comment => comment.id !== commentId));
+
+    deleteComment(commentId)
+      .catch(() => setCommentsError(true))
+      .finally(() => setIsLoadingComments(false));
+  };
+
+  const handleCommentSubmit = (data: CommentData): Promise<void> => {
+    return createComment({ ...data, postId: selectedPost!.id, id: 0 }).then(
+      newComment => {
+        setComments(prev => [...prev, newComment]);
+      },
+    );
   };
 
   return (
@@ -155,6 +165,7 @@ export const App = () => {
                   isLoadingComments={isLoadingComments}
                   commentsError={commentsError}
                   onCommentDelete={handleCommentDelete}
+                  onCommentSubmit={handleCommentSubmit}
                 />
               )}
             </div>

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Post } from '../types/Post';
 import { Comment } from '../types/Comment';
+import { CommentData } from '../types/Comment';
 import { Loader } from './Loader';
-//import { NewCommentForm } from './NewCommentForm';
+import { NewCommentForm } from './NewCommentForm';
 
 type Props = {
   post: Post;
@@ -10,6 +11,7 @@ type Props = {
   isLoadingComments: boolean;
   commentsError: boolean;
   onCommentDelete: (commentId: number) => void;
+  onCommentSubmit: (data: CommentData) => Promise<void>;
 };
 
 export const PostDetails: React.FC<Props> = ({
@@ -18,7 +20,14 @@ export const PostDetails: React.FC<Props> = ({
   isLoadingComments,
   commentsError,
   onCommentDelete,
+  onCommentSubmit,
 }) => {
+  const [showForm, setShowForm] = React.useState(false);
+
+  useEffect(() => {
+    setShowForm(false);
+  }, [post.id]);
+
   return (
     <div className="content" data-cy="PostDetails">
       <div className="block">
@@ -77,17 +86,19 @@ export const PostDetails: React.FC<Props> = ({
           </>
         )}
 
-        <button
-          data-cy="WriteCommentButton"
-          type="button"
-          className="button is-link"
-        >
-          Write a comment
-        </button>
+        {!isLoadingComments && !commentsError && !showForm && (
+          <button
+            data-cy="WriteCommentButton"
+            type="button"
+            className="button is-link"
+            onClick={() => setShowForm(true)}
+          >
+            Write a comment
+          </button>
+        )}
       </div>
-      {
-        // <NewCommentForm />
-      }
+
+      {showForm && <NewCommentForm onSubmit={onCommentSubmit} />}
     </div>
   );
 };
