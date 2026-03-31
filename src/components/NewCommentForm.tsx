@@ -16,6 +16,7 @@ export const NewCommentForm: React.FC<Props> = ({ onSubmit }) => {
   const [bodyError, setBodyError] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -42,6 +43,7 @@ export const NewCommentForm: React.FC<Props> = ({ onSubmit }) => {
 
     onSubmit(commentData)
       .then(() => setBody(''))
+      .catch(() => setSubmitError(true))
       .finally(() => setIsLoading(false));
   };
 
@@ -52,6 +54,7 @@ export const NewCommentForm: React.FC<Props> = ({ onSubmit }) => {
     setNameError(false);
     setEmailError(false);
     setBodyError(false);
+    setSubmitError(false);
   };
 
   return (
@@ -184,6 +187,12 @@ export const NewCommentForm: React.FC<Props> = ({ onSubmit }) => {
           </button>
         </div>
       </div>
+
+      {submitError && (
+        <p className="help is-danger" data-cy="SubmitError">
+          Failed to add comment. Please try again.
+        </p>
+      )}
     </form>
   );
 };

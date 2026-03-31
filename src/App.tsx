@@ -92,6 +92,8 @@ export const App = () => {
   };
 
   const handleCommentDelete = async (commentId: number) => {
+    const previousComments = comments;
+
     setComments(prev => prev.filter(comment => comment.id !== commentId));
 
     try {
@@ -99,19 +101,26 @@ export const App = () => {
 
       await deleteComment(commentId);
     } catch {
+      setComments(previousComments);
       setCommentsError(true);
     }
   };
 
   const handleCommentSubmit = async (data: CommentData): Promise<void> => {
     const { createComment } = await import('./api/comments');
-    const newComment = await createComment({
-      ...data,
-      postId: selectedPost!.id,
-      id: 0,
-    });
 
-    setComments(prev => [...prev, newComment]);
+    try {
+      const newComment = await createComment({
+        ...data,
+        postId: selectedPost!.id,
+        id: 0,
+      });
+
+      setComments(prev => [...prev, newComment]);
+    } catch {
+      setCommentsError(true);
+      throw new Error('Failed to add comment');
+    }
   };
 
   return (
